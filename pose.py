@@ -8,6 +8,8 @@ import numpy as np
 import imutils
 import subprocess
 import mediapipe as mp
+import asyncio
+from picamera2 import Picamera2
 
 mp_pose = mp.solutions.pose
 pose = mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.5, model_complexity=1)
@@ -51,17 +53,18 @@ def calculateAngle(landmark1, landmark2, landmark3):
     return angle
 
 
-def check_pose(correct_pose_num):
+async def check_pose(correct_pose_num, picam2):
     
     #----------------------------------------------------------------------------------------------------------------
     # Calculate the required angles.
     #----------------------------------------------------------------------------------------------------------------
     
     try:
-        subprocess.run("libcamera-still -n --timeout 100 -o image.jpg", shell=True,
-               stdout=subprocess.DEVNULL,
-               stderr=subprocess.DEVNULL) # blocking call # set timeout to 100ms
-        image = cv2.imread("image.jpg")
+        # subprocess.run("libcamera-jpeg -n --timeout 1 --output image3.jpg", shell=True,
+        #        stdout=subprocess.DEVNULL,
+        #        stderr=subprocess.DEVNULL) # blocking call # set timeout to 100ms
+        # image = cv2.imread("image.jpg")
+        image = picam2.capture_array()  # 直接取得 numpy 圖像
         pose_image, landmarks = detectPose(image, pose)
 
         # Get the angle between the left shoulder, elbow and wrist points. 

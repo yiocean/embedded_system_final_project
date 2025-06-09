@@ -59,7 +59,7 @@ async def check_pose(correct_pose_num):
     #----------------------------------------------------------------------------------------------------------------
     
     try:
-        subprocess.run("libcamera-still -n --timeout 50 -o image3.jpg", shell=True,
+        subprocess.run("libcamera-jpeg -n --timeout 1 --output image3.jpg", shell=True,
                stdout=subprocess.DEVNULL,
                stderr=subprocess.DEVNULL) # blocking call # set timeout to 100ms
         image = cv2.imread("image.jpg")

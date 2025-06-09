@@ -171,6 +171,7 @@ def detect_press(event):
         value = read_channel(ch)
         if value > threshold:
             pressed_channels.append(ch+1)
+            print(f"channel {ch+1} hit!!, event:{event}")
     if pressed_channels and sorted(pressed_channels) == sorted(event):
         return 1
     else:
@@ -210,14 +211,15 @@ async def game_loop(game_data):
         for event in game_data:
             # Check if the pose is correct
             print(f"Current pose index: {pose_idx}")
-            time.sleep(1)  # Wait for 2 seconds before checking the pose
-            pose_task = asyncio.create_task(check_pose(poses[pose_idx]))
+            # time.sleep(1)  # Wait for 2 seconds before checking the pose
+            # pose_task = asyncio.create_task(check_pose(poses[pose_idx]))
             # pose_flag = check_pose(poses[pose_idx])
             
             while time.time() - start_time < event['time']:
                 if pre_event:
                     result = detect_press(pre_event)
                     if result == 1:
+                        print("hit result!!!!!")
                         hit_score += 1
                         pre_event = []
                         if pose_flag == 1:
@@ -230,6 +232,7 @@ async def game_loop(game_data):
 
             result = detect_press(event['keys'])
             if result == 1:
+                print("hit result!")
                 hit_score += 1
                 pre_event = []
                 if pose_flag == 1:
@@ -238,15 +241,15 @@ async def game_loop(game_data):
                 pre_event = event['keys']
 
             await light_task
-            pose_flag = await pose_task  # Wait for the pose check to complete
-            if pose_flag:
-                print(f"Pose {poses[pose_idx]} detected successfully!")
-                pose_score += 1
-            else:
-                print(f"Pose {poses[pose_idx]} failed, try again.")
-            pose_idx = (pose_idx + 1) % len(poses)  # Cycle through poses     
-            # if int(event['time']) % 3 == 0:
-                # pose_flag = detect_pose
+            # pose_flag = await pose_task  # Wait for the pose check to complete
+            # if pose_flag:
+            #     print(f"Pose {poses[pose_idx]} detected successfully!")
+            #     pose_score += 1
+            # else:
+            #     print(f"Pose {poses[pose_idx]} failed, try again.")
+            # pose_idx = (pose_idx + 1) % len(poses)  # Cycle through poses     
+            if int(event['time']) % 3 == 0:
+                pose_flag = detect_pose
            
     except KeyboardInterrupt:
         print("\nGame interrupted by user.")

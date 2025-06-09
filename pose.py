@@ -8,6 +8,7 @@ import numpy as np
 import imutils
 import subprocess
 import mediapipe as mp
+import asyncio
 
 mp_pose = mp.solutions.pose
 pose = mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.5, model_complexity=1)
@@ -51,14 +52,14 @@ def calculateAngle(landmark1, landmark2, landmark3):
     return angle
 
 
-def check_pose(correct_pose_num):
+async def check_pose(correct_pose_num):
     
     #----------------------------------------------------------------------------------------------------------------
     # Calculate the required angles.
     #----------------------------------------------------------------------------------------------------------------
     
     try:
-        subprocess.run("libcamera-still -n --timeout 100 -o image.jpg", shell=True,
+        subprocess.run("libcamera-still -n --timeout 50 -o image3.jpg", shell=True,
                stdout=subprocess.DEVNULL,
                stderr=subprocess.DEVNULL) # blocking call # set timeout to 100ms
         image = cv2.imread("image.jpg")

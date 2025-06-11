@@ -38,6 +38,7 @@ r=sr.Recognizer()
 
 def check_start():
     with suppress_stderr(), noalsaerr():
+        # with sr.Microphone() as source:
         with sr.Microphone() as source:
             print("Please wait. Calibrating microphone...") 
             #listen for 1 seconds and create the ambient noise energy level 
@@ -47,12 +48,13 @@ def check_start():
             try:
                 text = r.recognize_google(audio)
                 text = text.lower()
-                if 'start' in text:
+                if 'hi' in text:
                     print(f'You say "{text}"!')
                     return True
                 else:
                     return False
-            except:
+            except Exception as e:
+                print(f"Failed to check start: {e}")
                 print("Failed to check start.")
 
 def choose_song():
@@ -95,7 +97,7 @@ def main():
             if start:
                 song_num = choose_song()
                 if song_num > 0: # choose song successfully
-                    subprocess.run(f"mpg123 song{song_num}.mp3", shell=True) # blocking call
+                    subprocess.run(f"sudo aplay -D hw:3,0 song{song_num}.wav", shell=True) # blocking call
                     # if used in main function, replace the above line as asynchronous
                     # subprocess.Popen(["mpg123", f"song{song_num}.mp3"]) # non-blocking
                     # 麥克風和音響要同時用的話，要一起插在音效介面(卡)上

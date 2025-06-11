@@ -64,6 +64,7 @@ async def check_pose(correct_pose_num, picam2):
         #        stdout=subprocess.DEVNULL,
         #        stderr=subprocess.DEVNULL) # blocking call # set timeout to 100ms
         # image = cv2.imread("image.jpg")
+        await asyncio.sleep(1)
         image = picam2.capture_array()  # 直接取得 numpy 圖像
         pose_image, landmarks = detectPose(image, pose)
 
@@ -116,24 +117,36 @@ async def check_pose(correct_pose_num, picam2):
 
     
     # return output_image, label
-
+elbow_angle_threshold_left = 150
+elbow_angle_threshold_right = 210
+shoulder_angle_threshold_left = 60
+shoulder_angle_threshold_right = 120
+ninety_left = 60
+ninety_right = 120
+hundred_eighty_left = 150
+hundred_eighty_right = 210
 def check_pose_0(left_elbow_angle, right_elbow_angle, left_shoulder_angle, right_shoulder_angle):
-    return 165 < left_elbow_angle < 195 and 165 < right_elbow_angle < 195 and 80 < left_shoulder_angle < 110 and 80 < right_shoulder_angle < 110
+    print(f'left_elbow_angle: {left_elbow_angle}, right_elbow_angle: {right_elbow_angle}, left_shoulder_angle: {left_shoulder_angle}, right_shoulder_angle: {right_shoulder_angle}')
+    return hundred_eighty_left < left_elbow_angle < hundred_eighty_right and hundred_eighty_left < right_elbow_angle < hundred_eighty_right and ninety_left < left_shoulder_angle < ninety_right and ninety_left < right_shoulder_angle < ninety_right
 def check_pose_1(left_elbow_angle, right_elbow_angle, left_shoulder_angle, right_shoulder_angle):
-    print(f'right_elbow_angle: {right_elbow_angle}')
-    return 165 < left_elbow_angle < 195 and 60 < right_elbow_angle < 120 and 80 < left_shoulder_angle < 110 and 80 < right_shoulder_angle < 110
+    print(f'left_elbow_angle: {left_elbow_angle}, right_elbow_angle: {right_elbow_angle}, left_shoulder_angle: {left_shoulder_angle}, right_shoulder_angle: {right_shoulder_angle}')
+    return hundred_eighty_left < left_elbow_angle < hundred_eighty_right and ninety_left < right_elbow_angle < ninety_right and ninety_left < left_shoulder_angle < ninety_right and ninety_left < right_shoulder_angle < ninety_right
 def check_pose_2(left_elbow_angle, right_elbow_angle, left_shoulder_angle, right_shoulder_angle):
-    print(f'left_elbow_angle: {left_elbow_angle}')
-    return 60 < left_elbow_angle < 120 and 165 < right_elbow_angle < 195 and 80 < left_shoulder_angle < 110 and 80 < right_shoulder_angle < 110
+    print(f'left_elbow_angle: {left_elbow_angle}, right_elbow_angle: {right_elbow_angle}, left_shoulder_angle: {left_shoulder_angle}, right_shoulder_angle: {right_shoulder_angle}')
+    return ninety_left < left_elbow_angle < ninety_right and hundred_eighty_left < right_elbow_angle < hundred_eighty_right and ninety_left < left_shoulder_angle < ninety_right and ninety_left < right_shoulder_angle < ninety_right
 def check_pose_3(left_elbow_angle, right_elbow_angle, left_shoulder_angle, right_shoulder_angle):
-    print(f'right_elbow_angle: {right_elbow_angle}, left_elbow_angle: {left_elbow_angle}')
-    return 60 < left_elbow_angle < 120 and 60 < right_elbow_angle < 120 and 80 < left_shoulder_angle < 110 and 80 < right_shoulder_angle < 110
+    print(f'left_elbow_angle: {left_elbow_angle}, right_elbow_angle: {right_elbow_angle}, left_shoulder_angle: {left_shoulder_angle}, right_shoulder_angle: {right_shoulder_angle}')
+    return ninety_left < left_elbow_angle < ninety_right and ninety_left < right_elbow_angle < ninety_right and ninety_left < left_shoulder_angle < ninety_right and ninety_left < right_shoulder_angle < ninety_right
 def check_pose_4(left_elbow_angle, right_elbow_angle, left_shoulder_angle, right_shoulder_angle):
-    print(f'right_shoulder_angle: {right_shoulder_angle}, left_shoulder_angle: {left_shoulder_angle}')
-    return 165 < left_elbow_angle < 195 and 165 < right_elbow_angle < 195 and 165 < left_shoulder_angle < 195 and 165 < right_shoulder_angle < 195
+    print(f'left_elbow_angle: {left_elbow_angle}, right_elbow_angle: {right_elbow_angle}, left_shoulder_angle: {left_shoulder_angle}, right_shoulder_angle: {right_shoulder_angle}')
+    return hundred_eighty_left < left_elbow_angle < hundred_eighty_right and hundred_eighty_left < right_elbow_angle < hundred_eighty_right and hundred_eighty_left < left_shoulder_angle < hundred_eighty_right and hundred_eighty_left < right_shoulder_angle < hundred_eighty_right
 
 
 def main():
+    picam2 = Picamera2()
+    picam2.configure(picam2.create_still_configuration(main={"size": (3280, 2464)}))
+    picam2.start()
+    time.sleep(1)
     poses = [0,1,2,3,4]
     # music = "song0.mp3"
     # subprocess.Popen(["mpg123", music])
@@ -143,7 +156,7 @@ def main():
             pose_num = i
             print(f'Pose {i}!!')
             time.sleep(2)
-            result = check_pose(pose_num)
+            result = check_pose(pose_num, picam2)
             if result:
                 print(f'Successfully perform pose {pose_num}')
             else:

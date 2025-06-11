@@ -27,7 +27,7 @@ mp_drawing = mp.solutions.drawing_utils
 spi = spidev.SpiDev()
 spi.open(0, 0)  # bus 0, device 0 (CE0)
 spi.max_speed_hz = 1350000
-threshold = 10
+threshold = 50
 
 LED_COUNT = 64
 LED_PIN = 18
@@ -110,13 +110,13 @@ def choose_song():
             try:
                 text = r.recognize_google(audio)
                 text = text.lower()
-                if 'one' in text:
+                if 'one' in text or '1' in text:
                     print(f'You say "{text}"!')
                     return 1
-                elif 'two' in text:
+                elif 'two' in text or '2' in text:
                     print(f'You say "{text}"!')
                     return 2
-                elif 'three' in text:
+                elif 'three' in text or '3' in text:
                     print(f'You say "{text}"!')
                     return 3
                 else:
@@ -139,14 +139,14 @@ async def light_selected_range(strip, segments, color=Color(255, 0, 0), wait_ms=
     expanded = [x for val in segments for x in [val]*7]
     for i in range(56):
         if expanded[i]:
-            strip.setPixelColor(i, color)
+            strip.setPixelColor(i + 4, color)
         else:
-            strip.setPixelColor(i, 0)
+            strip.setPixelColor(i + 4, 0)
 
     strip.show()
     await asyncio.sleep(wait_ms / 1000)
     for i in range(56):
-        strip.setPixelColor(i, 0)
+        strip.setPixelColor(i + 4, 0)
 
 # 讀 MCP3008 資料的函式
 def read_channel(channel):
@@ -198,27 +198,29 @@ def detect_pose(pose_num):
         print(f'Failed to perform pose {pose_num}')
     return result
 
-async def game_loop(game_data, song_num):
+async def game_loop(game_data, song_num, update_score_callback=None, update_pose_image_callback=None):
     score = 0
     pre_event = []
     pose_flag = 1
-    poses = [0,1,2,3,4]
+    poses = [1,2,3,4] # [0,1,2,3,4]
     pose_idx = 0
     hit_score = 0
     pose_score = 0
 
     picam2 = Picamera2()
-    picam2.configure(picam2.create_still_configuration(main={"size": (640, 480)}))
+    picam2.configure(picam2.create_still_configuration(main={"size": (3280, 2464)}))
     picam2.start()
     time.sleep(1)  # 等相機 warm up（可選）
     subprocess.Popen(f"sudo aplay -D hw:3,0 song{song_num}.wav", shell=True)
-    
+    time.sleep(0.5)
     start_time = time.time()
     
     try:
         for event in game_data:
             # Check if the pose is correct
-            print(f"Current pose index: {pose_idx}")
+            if update_pose_image_callback:
+                update_pose_image_callback(poses[pose_idx])
+            print(f"Current pose index: {poses[pose_idx]}")
             # time.sleep(1)  # Wait for 2 seconds before checking the pose
             pose_task = asyncio.create_task(check_pose(poses[pose_idx], picam2))
             # pose_flag = check_pose(poses[pose_idx])
@@ -229,9 +231,12 @@ async def game_loop(game_data, song_num):
                     if result == 1:
                         print("hit result!!!!!")
                         hit_score += 1
+                        score += 1
                         pre_event = []
                         if pose_flag == 1:
-                            score += 1
+                            score += 5
+                        if update_score_callback:
+                            update_score_callback(score, hit_score, pose_score)
                 time.sleep(0.1)
             
             light_num = keys_to_binary_list(event['keys'])
@@ -242,9 +247,12 @@ async def game_loop(game_data, song_num):
             if result == 1:
                 print("hit result!")
                 hit_score += 1
+                score += 1
                 pre_event = []
                 if pose_flag == 1:
-                    score += 1
+                    score += 5
+                if update_score_callback:
+                    update_score_callback(score, hit_score, pose_score)
             else:
                 pre_event = event['keys']
 
@@ -253,15 +261,24 @@ async def game_loop(game_data, song_num):
             if pose_flag:
                 print(f"Pose {poses[pose_idx]} detected successfully!")
                 pose_score += 1
+                score += 1
             else:
                 print(f"Pose {poses[pose_idx]} failed, try again.")
+            if update_score_callback:
+                update_score_callback(score, hit_score, pose_score)
             pose_idx = (pose_idx + 1) % len(poses)  # Cycle through poses     
             if int(event['time']) % 3 == 0:
                 pose_flag = detect_pose
-           
+        
+        colorWipe(strip, Color(0, 0, 0), 100)
     except KeyboardInterrupt:
         print("\nGame interrupted by user.")
+        colorWipe(strip, Color(0, 0, 0), 100)
     
+    # score += hit_score
+    # score += pose_score
+    if update_score_callback: # final update
+        update_score_callback(score, hit_score, pose_score)
     print(f"Game Over! Your score: {score}")
     print(f"hit_score: {hit_score}")
     print(f"pose_score: {pose_score}")

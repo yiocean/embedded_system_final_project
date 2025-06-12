@@ -148,6 +148,26 @@ async def light_selected_range(strip, segments, color=Color(255, 0, 0), wait_ms=
     for i in range(56):
         strip.setPixelColor(i + 4, 0)
 
+def wheel(pos):
+    """生成橫跨0-255個位置的彩虹顏色。"""
+    if pos < 85:
+        return Color(pos * 3, 255 - pos * 3, 0)
+    elif pos < 170:
+        pos -= 85
+        return Color(255 - pos * 3, 0, pos * 3)
+    else:
+        pos -= 170
+        return Color(0, pos * 3, 255 - pos * 3)
+
+def rainbowCycle(strip, wait_ms=10, iterations=5):
+    """畫出均勻分布在所有像素上的彩虹。"""
+    for j in range(256 * iterations):
+        for i in range(strip.numPixels()):
+            strip.setPixelColor(i, wheel(
+                (int(i * 256 / strip.numPixels()) + j) & 255))
+        strip.show()
+        time.sleep(wait_ms / 1000.0)
+
 # 讀 MCP3008 資料的函式
 def read_channel(channel):
     assert 0 <= channel <= 7, "Channel must be 0-7"
@@ -270,6 +290,7 @@ async def game_loop(game_data, song_num, update_score_callback=None, update_pose
             if int(event['time']) % 3 == 0:
                 pose_flag = detect_pose
         
+        rainbowCycle(strip)
         colorWipe(strip, Color(0, 0, 0), 100)
     except KeyboardInterrupt:
         print("\nGame interrupted by user.")

@@ -1,0 +1,8 @@
+Pillow
+spidev
+rpi_ws281x
+picamera2
+opencv-python
+imutils
+mediapipe
+numpy
